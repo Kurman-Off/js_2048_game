@@ -3,6 +3,7 @@
 // Uncomment the next lines to use your game instance in the browser
 // const Game = require('../modules/Game.class');
 // const game = new Game();
+const score = [];
 
 function getRows() {
   const rows = document.querySelectorAll('.field-row');
@@ -20,6 +21,10 @@ function getRows() {
   });
 
   return matrix;
+}
+
+function transposeMatrix(matrix) {
+  return matrix[0].map((_, colIndex) => matrix.map((row) => row[colIndex]));
 }
 
 function randomNumbers() {
@@ -51,38 +56,35 @@ function addRandomNumberToRow(matrix) {
   }
 }
 
-function statusStart() {
-  const start = document.querySelector('.start');
+function statusButton() {
+  const startBtn = document.querySelector('.start');
   const startNotification = document.querySelector('.message-start');
+  const winNotification = document.querySelector('.message-win');
+  const loseNotification = document.querySelector('.message-lose');
+  let stat = false;
 
-  start.addEventListener('click', () => {
-    const matrix = getRows();
+  const clickHandler = () => {
+    stat = !stat;
 
-    addRandomNumberToRow(matrix);
-    addRandomNumberToRow(matrix);
+    if (stat) {
+      const matrix = getRows();
 
-    start.disabled = true;
-    startNotification.style.display = 'none';
+      startBtn.textContent = 'Restart';
 
-    statusRestart();
-  });
-}
-
-function statusRestart() {
-  const restart = document.querySelector('.start');
-  const startNotification = document.querySelector('.message-start');
-
-  restart.textContent = 'Restart';
-
-  const restartClickHandler = () => {
-    resetMatrix();
-    addRandomNumberToRow(getRows());
-    addRandomNumberToRow(getRows());
-    restart.disabled = false;
-    startNotification.style.display = 'block';
+      startNotification.style.display = 'none';
+      addRandomNumberToRow(matrix);
+      addRandomNumberToRow(matrix);
+    } else {
+      startBtn.textContent = 'Start';
+      startNotification.style.display = 'block';
+      winNotification.style.display = 'none';
+      loseNotification.style.display = 'none';
+      resetMatrix();
+      resetScore();
+    }
   };
 
-  restart.addEventListener('click', restartClickHandler);
+  startBtn.addEventListener('click', clickHandler);
 }
 
 function resetMatrix() {
@@ -109,6 +111,7 @@ function moveRight(matrix) {
     for (let i = 0; i < rowWithoutEmptyElements.length; i++) {
       if (rowWithoutEmptyElements[i] === rowWithoutEmptyElements[i + 1]) {
         newRow.push(rowWithoutEmptyElements[i] * 2);
+        score.push(rowWithoutEmptyElements[i] * 2);
         i++;
       } else {
         newRow.push(rowWithoutEmptyElements[i]);
@@ -142,6 +145,14 @@ function moveRight(matrix) {
     addRandomNumberToRow(newMatrix);
   }
 
+  const totalScore = score.reduce((sum, currentScore) => {
+    return sum + currentScore;
+  }, 0);
+
+  updateScore(totalScore);
+  statusLose(newMatrix);
+  statusWin(newMatrix);
+
   return newMatrix;
 }
 
@@ -150,7 +161,6 @@ function moveLeft(matrix) {
     const rowWithoutEmptyElements = [];
     const newRow = [];
 
-    // Видаляємо порожні елементи з рядка
     for (let i = 0; i < row.length; i++) {
       if (row[i] !== '') {
         rowWithoutEmptyElements.push(row[i]);
@@ -160,6 +170,7 @@ function moveLeft(matrix) {
     for (let i = 0; i < rowWithoutEmptyElements.length; i++) {
       if (rowWithoutEmptyElements[i] === rowWithoutEmptyElements[i + 1]) {
         newRow.push(rowWithoutEmptyElements[i] * 2);
+        score.push(rowWithoutEmptyElements[i] * 2);
         i++;
       } else {
         newRow.push(rowWithoutEmptyElements[i]);
@@ -193,17 +204,184 @@ function moveLeft(matrix) {
     addRandomNumberToRow(newMatrix);
   }
 
+  const totalScore = score.reduce((sum, currentScore) => {
+    return sum + currentScore;
+  }, 0);
+
+  updateScore(totalScore);
+  statusWin(newMatrix);
+  statusLose(newMatrix);
+
   return newMatrix;
 }
 
+function moveUp(matrix) {
+  const newMatrix = transposeMatrix(matrix).map((row) => {
+    const rowWithoutEmptyElements = [];
+    const newRow = [];
+
+    for (let i = 0; i < row.length; i++) {
+      if (row[i] !== '') {
+        rowWithoutEmptyElements.push(row[i]);
+      }
+    }
+
+    for (let i = 0; i < rowWithoutEmptyElements.length; i++) {
+      if (rowWithoutEmptyElements[i] === rowWithoutEmptyElements[i + 1]) {
+        newRow.push(rowWithoutEmptyElements[i] * 2);
+        score.push(rowWithoutEmptyElements[i] * 2);
+        i++;
+      } else {
+        newRow.push(rowWithoutEmptyElements[i]);
+      }
+    }
+
+    while (newRow.length < row.length) {
+      newRow.push('');
+    }
+
+    return newRow;
+  });
+
+  const finalMatrix = transposeMatrix(newMatrix);
+
+  const matrixChanged = !matrix.every((row, rowIndex) => {
+    return row.every((cell, colIndex) => {
+      return cell === finalMatrix[rowIndex][colIndex];
+    });
+  });
+
+  finalMatrix.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+      const cellToFill = document
+        .querySelectorAll('.field-row')
+        [rowIndex].querySelectorAll('.field-cell')[colIndex];
+
+      cellToFill.textContent = cell;
+    });
+  });
+
+  if (matrixChanged) {
+    addRandomNumberToRow(finalMatrix);
+  }
+
+  const totalScore = score.reduce((sum, currentScore) => sum + currentScore, 0);
+
+  updateScore(totalScore);
+  statusWin(newMatrix);
+  statusLose(newMatrix);
+
+  return finalMatrix;
+}
+
+function moveDown(matrix) {
+  const newMatrix = transposeMatrix(matrix).map((row) => {
+    const rowWithoutEmptyElements = [];
+    const newRow = [];
+
+    for (let i = 0; i < row.length; i++) {
+      if (row[i] !== '') {
+        rowWithoutEmptyElements.push(row[i]);
+      }
+    }
+
+    for (let i = 0; i < rowWithoutEmptyElements.length; i++) {
+      if (rowWithoutEmptyElements[i] === rowWithoutEmptyElements[i + 1]) {
+        newRow.push(rowWithoutEmptyElements[i] * 2);
+        score.push(rowWithoutEmptyElements[i] * 2);
+        i++;
+      } else {
+        newRow.push(rowWithoutEmptyElements[i]);
+      }
+    }
+
+    while (newRow.length < row.length) {
+      newRow.unshift('');
+    }
+
+    return newRow;
+  });
+
+  const finalMatrix = transposeMatrix(newMatrix);
+
+  const matrixChanged = !matrix.every((row, rowIndex) => {
+    return row.every((cell, colIndex) => {
+      return cell === finalMatrix[rowIndex][colIndex];
+    });
+  });
+
+  finalMatrix.forEach((row, rowIndex) => {
+    row.forEach((cell, colIndex) => {
+      const cellToFill = document
+        .querySelectorAll('.field-row')
+        [rowIndex].querySelectorAll('.field-cell')[colIndex];
+
+      cellToFill.textContent = cell;
+    });
+  });
+
+  if (matrixChanged) {
+    addRandomNumberToRow(finalMatrix);
+  }
+
+  const totalScore = score.reduce((sum, currentScore) => sum + currentScore, 0);
+
+  updateScore(totalScore);
+  statusWin(newMatrix);
+  statusLose(newMatrix);
+
+  return finalMatrix;
+}
+
+function updateScore(scores) {
+  const scoreElement = document.querySelector('.game-score');
+
+  if (scoreElement) {
+    scoreElement.textContent = scores;
+  }
+}
+
+function resetScore() {
+  score.length = 0;
+  updateScore(0);
+}
+
+function statusWin(matrix) {
+  if (matrix.every((row) => row.every((cell) => cell === 2048))) {
+    const winNotification = document.querySelector('.message-win');
+
+    if (winNotification) {
+      winNotification.style.display = 'block';
+    }
+  }
+}
+
+function statusLose(matrix) {
+  if (matrix.every((row) => row.every((cell) => cell !== ''))) {
+    const winNotification = document.querySelector('.message-lose');
+
+    if (winNotification) {
+      winNotification.style.display = 'block';
+    }
+  }
+}
+
 function init() {
-  statusStart();
+  const moveFunctions = {
+    ArrowRight: moveRight,
+    ArrowLeft: moveLeft,
+    ArrowUp: moveUp,
+    ArrowDown: moveDown,
+  };
+
+  statusButton();
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight') {
-      moveRight(getRows());
-    } else if (e.key === 'ArrowLeft') {
-      moveLeft(getRows());
+    const matrix = getRows();
+    const moveFunction = moveFunctions[e.key];
+
+    if (moveFunction) {
+      moveFunction(matrix);
     }
   });
 }
