@@ -4,6 +4,7 @@
 // const Game = require('../modules/Game.class');
 // const game = new Game();
 const score = [];
+let gameOver = false;
 
 function getRows() {
   const rows = document.querySelectorAll('.field-row');
@@ -70,8 +71,10 @@ function statusButton() {
       const matrix = getRows();
 
       startBtn.textContent = 'Restart';
-
       startNotification.style.display = 'none';
+
+      init();
+      handleTouchEvents();
       addRandomNumberToRow(matrix);
       addRandomNumberToRow(matrix);
     } else {
@@ -79,6 +82,7 @@ function statusButton() {
       startNotification.style.display = 'block';
       winNotification.style.display = 'none';
       loseNotification.style.display = 'none';
+      gameOver = false;
       resetMatrix();
       resetScore();
     }
@@ -98,15 +102,23 @@ function resetMatrix() {
 }
 
 function moveRight(matrix) {
+  if (gameOver) {
+    return;
+  }
+
   const newMatrix = matrix.map((row) => {
     const rowWithoutEmptyElements = [];
     const newRow = [];
 
     for (let i = 0; i < row.length; i++) {
-      if (row[i] !== '') {
-        rowWithoutEmptyElements.push(row[i]);
+      const cell = Number(row[i]);
+
+      if (!isNaN(cell) && cell !== 0) {
+        rowWithoutEmptyElements.push(cell);
       }
     }
+
+    rowWithoutEmptyElements.reverse();
 
     for (let i = 0; i < rowWithoutEmptyElements.length; i++) {
       if (rowWithoutEmptyElements[i] === rowWithoutEmptyElements[i + 1]) {
@@ -118,6 +130,8 @@ function moveRight(matrix) {
       }
     }
 
+    newRow.reverse();
+
     while (newRow.length < row.length) {
       newRow.unshift('');
     }
@@ -127,7 +141,7 @@ function moveRight(matrix) {
 
   const matrixChanged = !matrix.every((row, rowIndex) => {
     return row.every((cell, colIndex) => {
-      return cell === newMatrix[rowIndex][colIndex];
+      return Number(cell) === Number(newMatrix[rowIndex][colIndex]);
     });
   });
 
@@ -145,25 +159,29 @@ function moveRight(matrix) {
     addRandomNumberToRow(newMatrix);
   }
 
-  const totalScore = score.reduce((sum, currentScore) => {
-    return sum + currentScore;
-  }, 0);
+  const totalScore = score.reduce((sum, currentScore) => sum + currentScore, 0);
 
   updateScore(totalScore);
-  statusLose(newMatrix);
   statusWin(newMatrix);
+  statusLose(newMatrix);
 
   return newMatrix;
 }
 
 function moveLeft(matrix) {
+  if (gameOver) {
+    return;
+  }
+
   const newMatrix = matrix.map((row) => {
     const rowWithoutEmptyElements = [];
     const newRow = [];
 
     for (let i = 0; i < row.length; i++) {
-      if (row[i] !== '') {
-        rowWithoutEmptyElements.push(row[i]);
+      const cell = Number(row[i]); // Перетворюємо значення в число
+
+      if (!isNaN(cell) && cell !== 0) {
+        rowWithoutEmptyElements.push(cell);
       }
     }
 
@@ -186,7 +204,7 @@ function moveLeft(matrix) {
 
   const matrixChanged = !matrix.every((row, rowIndex) => {
     return row.every((cell, colIndex) => {
-      return cell === newMatrix[rowIndex][colIndex];
+      return Number(cell) === Number(newMatrix[rowIndex][colIndex]);
     });
   });
 
@@ -204,9 +222,7 @@ function moveLeft(matrix) {
     addRandomNumberToRow(newMatrix);
   }
 
-  const totalScore = score.reduce((sum, currentScore) => {
-    return sum + currentScore;
-  }, 0);
+  const totalScore = score.reduce((sum, currentScore) => sum + currentScore, 0);
 
   updateScore(totalScore);
   statusWin(newMatrix);
@@ -216,13 +232,19 @@ function moveLeft(matrix) {
 }
 
 function moveUp(matrix) {
+  if (gameOver) {
+    return;
+  }
+
   const newMatrix = transposeMatrix(matrix).map((row) => {
     const rowWithoutEmptyElements = [];
     const newRow = [];
 
     for (let i = 0; i < row.length; i++) {
-      if (row[i] !== '') {
-        rowWithoutEmptyElements.push(row[i]);
+      const cell = Number(row[i]); // Перетворюємо значення в число
+
+      if (!isNaN(cell) && cell !== 0) {
+        rowWithoutEmptyElements.push(cell);
       }
     }
 
@@ -247,7 +269,7 @@ function moveUp(matrix) {
 
   const matrixChanged = !matrix.every((row, rowIndex) => {
     return row.every((cell, colIndex) => {
-      return cell === finalMatrix[rowIndex][colIndex];
+      return Number(cell) === Number(finalMatrix[rowIndex][colIndex]);
     });
   });
 
@@ -268,22 +290,30 @@ function moveUp(matrix) {
   const totalScore = score.reduce((sum, currentScore) => sum + currentScore, 0);
 
   updateScore(totalScore);
-  statusWin(newMatrix);
-  statusLose(newMatrix);
+  statusWin(finalMatrix);
+  statusLose(finalMatrix);
 
   return finalMatrix;
 }
 
 function moveDown(matrix) {
+  if (gameOver) {
+    return;
+  }
+
   const newMatrix = transposeMatrix(matrix).map((row) => {
     const rowWithoutEmptyElements = [];
     const newRow = [];
 
     for (let i = 0; i < row.length; i++) {
-      if (row[i] !== '') {
-        rowWithoutEmptyElements.push(row[i]);
+      const cell = Number(row[i]); // Перетворюємо значення в число
+
+      if (!isNaN(cell) && cell !== 0) {
+        rowWithoutEmptyElements.push(cell);
       }
     }
+
+    rowWithoutEmptyElements.reverse();
 
     for (let i = 0; i < rowWithoutEmptyElements.length; i++) {
       if (rowWithoutEmptyElements[i] === rowWithoutEmptyElements[i + 1]) {
@@ -294,6 +324,8 @@ function moveDown(matrix) {
         newRow.push(rowWithoutEmptyElements[i]);
       }
     }
+
+    newRow.reverse();
 
     while (newRow.length < row.length) {
       newRow.unshift('');
@@ -306,7 +338,7 @@ function moveDown(matrix) {
 
   const matrixChanged = !matrix.every((row, rowIndex) => {
     return row.every((cell, colIndex) => {
-      return cell === finalMatrix[rowIndex][colIndex];
+      return Number(cell) === Number(finalMatrix[rowIndex][colIndex]);
     });
   });
 
@@ -327,8 +359,8 @@ function moveDown(matrix) {
   const totalScore = score.reduce((sum, currentScore) => sum + currentScore, 0);
 
   updateScore(totalScore);
-  statusWin(newMatrix);
-  statusLose(newMatrix);
+  statusWin(finalMatrix);
+  statusLose(finalMatrix);
 
   return finalMatrix;
 }
@@ -347,21 +379,44 @@ function resetScore() {
 }
 
 function statusWin(matrix) {
-  if (matrix.every((row) => row.every((cell) => cell === 2048))) {
+  if (matrix.some((row) => row.some((cell) => cell >= 2048))) {
     const winNotification = document.querySelector('.message-win');
 
     if (winNotification) {
       winNotification.style.display = 'block';
+      gameOver = true;
     }
   }
 }
 
 function statusLose(matrix) {
-  if (matrix.every((row) => row.every((cell) => cell !== ''))) {
-    const winNotification = document.querySelector('.message-lose');
+  const allCellsFilled = matrix.every((row) => {
+    return row.every((cell) => {
+      return Number(cell) !== 0;
+    });
+  });
 
-    if (winNotification) {
-      winNotification.style.display = 'block';
+  if (allCellsFilled) {
+    const canMerge = matrix.some((row, rowIndex) => {
+      return row.some((cell, colIndex) => {
+        const rightMerge =
+          colIndex < row.length - 1 &&
+          Number(cell) === Number(row[colIndex + 1]);
+        const downMerge =
+          rowIndex < matrix.length - 1 &&
+          Number(cell) === Number(matrix[rowIndex + 1][colIndex]);
+
+        return rightMerge || downMerge;
+      });
+    });
+
+    if (!canMerge) {
+      const loseNotification = document.querySelector('.message-lose');
+
+      if (loseNotification) {
+        loseNotification.style.display = 'block';
+        gameOver = true;
+      }
     }
   }
 }
@@ -374,9 +429,11 @@ function init() {
     ArrowDown: moveDown,
   };
 
-  statusButton();
-
   document.addEventListener('keydown', (e) => {
+    if (gameOver) {
+      return;
+    }
+
     const matrix = getRows();
     const moveFunction = moveFunctions[e.key];
 
@@ -386,4 +443,43 @@ function init() {
   });
 }
 
-init();
+function handleTouchEvents() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchEndX = 0;
+  let touchEndY = 0;
+
+  document.addEventListener('touchstart', function (e) {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  });
+
+  document.addEventListener('touchmove', function (e) {
+    touchEndX = e.changedTouches[0].screenX;
+    touchEndY = e.changedTouches[0].screenY;
+  });
+
+  document.addEventListener('touchend', function () {
+    handleGesture();
+  });
+
+  function handleGesture() {
+    const diffX = touchEndX - touchStartX;
+    const diffY = touchEndY - touchStartY;
+
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      if (diffX > 0) {
+        moveRight(getRows());
+      } else {
+        moveLeft(getRows());
+      }
+    } else {
+      if (diffY > 0) {
+        moveDown(getRows());
+      } else {
+        moveUp(getRows());
+      }
+    }
+  }
+}
+statusButton();
